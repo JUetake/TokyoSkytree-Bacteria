@@ -1,5 +1,6 @@
 library(dada2)
 
+#Original fastq files are available from https://figshare.com/account/home#/projects/60497
 path <- "PATH/TO/FOLDER of Air_ref samples"
 fns <- list.files(path)
 fns
