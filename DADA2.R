@@ -64,6 +64,7 @@ control <- readRDS("Previous_sequences.rds")
 Air_ref <- readRDS("Skytree_air_potential_sources.rds")
 Skytree <- mergeSequenceTables(control, Air_ref)
 
+#Customized silva 128 sequence file is also available from https://figshare.com/account/home#/projects/60497
 taxa <- assignTaxonomy(Skytree, "silva_nr_v128_train_set_custom.fa")
 
 Skytree <- t(Skytree)
