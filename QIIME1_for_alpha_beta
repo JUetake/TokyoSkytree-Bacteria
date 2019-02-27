@@ -3,11 +3,8 @@ source activate qiime1
 #Create biom file 
 biom convert -i ASV_table.txt -o Skytree0.biom --to-hdf5 --table-type="OTU table" --process-obs-metadata taxonomy
 
-#filtered samples have low number (less than 1000) of sequences
-filter_samples_from_otu_table.py -i Skytree0.biom -o Skytree_no_low.biom -n 1000
-
 #picked only Tokyo Akytree air samples and remove sample in inadequate period and Chloroplast
-filter_samples_from_otu_table.py -i Skytree_no_low.biom -o Skytree.biom -m map.txt -s 'Region:Skytree'
+filter_samples_from_otu_table.py -i Skytree0.biom -o Skytree.biom -m map.txt -s 'Region:Skytree'
 filter_samples_from_otu_table.py -i Skytree.biom -o Skytree_Air.biom -m map.txt -s 'Type:Air'
 filter_samples_from_otu_table.py -i Skytree_Air.biom -o Skytree_Air_no_J.biom -m map.txt -s 'Month:*,!June'
 filter_samples_from_otu_table.py -i Skytree_Air_no_J.biom -o Skytree_Air_no_JJ.biom -m map.txt -s 'Month:*,!July'
