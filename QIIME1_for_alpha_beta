@@ -1,133 +1,29 @@
-#IMPORTANT
-#Prior to this analysis, we merged DADA2 outputs "ASV_table.txt" and "ASV_tax.txt" and removed all ASVs sequences belonging to "negative-control" in "Type" column of file "map.csv" manually, and make "ASV_table.txt".
+source activate qiime1
 
-#Create 
+#Create biom file 
 biom convert -i ASV_table.txt -o Skytree0.biom --to-hdf5 --table-type="OTU table" --process-obs-metadata taxonomy
+
+#filtered samples have low number (less than 1000) of sequences
 filter_samples_from_otu_table.py -i Skytree0.biom -o Skytree_no_low.biom -n 1000
-filter_samples_from_otu_table.py -i Skytree_no_low.biom -o Skytree.biom -m /Volumes/G-tech_RAID/Mi_seq/Skytree170926/map.txt -s 'Region:Skytree'
-filter_samples_from_otu_table.py -i Skytree.biom -o Skytree_Air.biom -m /Volumes/G-tech_RAID/Mi_seq/Skytree170926/map.txt -s 'Type:Air'
-filter_samples_from_otu_table.py -i Skytree_Air.biom -o Skytree_Air_no_J.biom -m /Volumes/G-tech_RAID/Mi_seq/Skytree170926/map.txt -s 'Month:*,!June'
-filter_samples_from_otu_table.py -i Skytree_Air_no_J.biom -o Skytree_Air_no_JJ.biom -m /Volumes/G-tech_RAID/Mi_seq/Skytree170926/map.txt -s 'Month:*,!July'
+
+#picked only Tokyo Akytree air samples and remove sample in inadequate period and Chloroplast
+filter_samples_from_otu_table.py -i Skytree_no_low.biom -o Skytree.biom -m map.txt -s 'Region:Skytree'
+filter_samples_from_otu_table.py -i Skytree.biom -o Skytree_Air.biom -m map.txt -s 'Type:Air'
+filter_samples_from_otu_table.py -i Skytree_Air.biom -o Skytree_Air_no_J.biom -m map.txt -s 'Month:*,!June'
+filter_samples_from_otu_table.py -i Skytree_Air_no_J.biom -o Skytree_Air_no_JJ.biom -m map.txt -s 'Month:*,!July'
 filter_taxa_from_otu_table.py -i Skytree_Air_no_JJ.biom -o Skytree_filtered.biom -n Chloroplast
 biom summarize-table -i Skytree_filtered.biom
 
+#Alpha diversity
 echo "alpha_diversity:metrics chao1,simpson_reciprocal,shannon" >alfa_params.txt
-alpha_rarefaction.py -i Skytree_filtered.biom -o alfa_rare_skytree_30/ -m /Volumes/G-tech_RAID/Mi_seq/Skytree170926/map.txt -p alfa_params.txt -n 30
-summarize_taxa_through_plots.py -o taxa_summary_skytree/ -i Skytree_filtered.biom -m /Volumes/G-tech_RAID/Mi_seq/Skytree170926/map.txt
-beta_diversity_through_plots.py -i Skytree_filtered.biom -o bdiv_skytree/ -t /Volumes/G-tech_RAID/Mi_seq/Skytree170926/rep.tre -m /Volumes/G-tech_RAID/Mi_seq/Skytree170926/map.txt -e 100
-
-make_emperor.py -i bdiv_skytree/weighted_unifrac_pc.txt -m /Volumes/G-tech_RAID/Mi_seq/Skytree170926/map.txt -o emperor_output -t taxa_summary_skytree/Skytree_filtered_L6.txt -o biplot_skytree -n 10 # -n number of taxa
-upgma_cluster.py -i bdiv_skytree/weighted_unifrac_dm.txt -o weighted_unifrac_skytree.tre
-upgma_cluster.py -i bdiv_skytree/unweighted_unifrac_dm.txt -o unweighted_unifrac_skytree.tre
-beta_diversity.py -i Skytree_filtered.biom  -m bray_curtis -o Bray_Curtis_skytree
-principal_coordinates.py -i Bray_Curtis_skytree/bray_curtis_Skytree_filtered.txt -o Bray_Curtis_skytree/bray_curtis_Skytree_filtered_PCoA.txt
-make_emperor.py -i Bray_Curtis_skytree/bray_curtis_Skytree_filtered_PCoA.txt -m /Volumes/G-tech_RAID/Mi_seq/Skytree170926/map.txt
-upgma_cluster.py -i Bray_Curtis_skytree/bray_curtis_Skytree_filtered.txt -o Bray_skytree.tre
-
-
+alpha_rarefaction.py -i Skytree_filtered.biom -o alfa_skytree/ -m map.txt -p alfa_params.txt -n 30
 
 biom convert -i Skytree_filtered.biom -o Skytree_filtered.txt --to-tsv --header-key taxonomy
-biom convert -i Skytree_no_low.biom -o Skytree_no_low.txt --to-tsv --header-key taxonomy
+#remove significant long transportation ASVs: ASV137, ASV429, ASV609, ASV1036, ASV1233, ASV1556 manually (https://figshare.com/articles/Sequence_of_each_ASV/7772747).  
+biom convert -i Skytree_filtered.txt -o Skytree_filtered_no_long.biom --to-hdf5 --table-type="OTU table" --process-obs-metadata taxonomy
 
-##全てのサンプルで
-filter_taxa_from_otu_table.py -i Skytree_no_low.biom -o Skytree_no_low_Chloro.biom -n Chloroplast
-beta_diversity_through_plots.py -i Skytree_no_low_Chloro.biom  -o bdiv_all_no_Chloro/ -t /Volumes/G-tech_RAID/Mi_seq/Skytree170926/rep.tre -m /Volumes/G-tech_RAID/Mi_seq/Skytree170926/map.txt -e 100
-summarize_taxa_through_plots.py -o taxa_summary_all_no_Chloro/ -i Skytree_no_low_Chloro.biom  -m /Volumes/G-tech_RAID/Mi_seq/Skytree170926/map.txt
-upgma_cluster.py -i bdiv_all/weighted_unifrac_dm.txt -o weighted_unifrac_all_no_Chloro.tre
-upgma_cluster.py -i bdiv_all/unweighted_unifrac_dm.txt -o unweighted_unifrac_all_no_Chloro.tre
-beta_diversity.py -i Skytree_no_low_Chloro.biom  -m bray_curtis -o Bray_Curtis_all_no_Chloro
-
-principal_coordinates.py -i Bray_Curtis_all_no_Chloro/bray_curtis_Skytree_no_low_Chloro.txt -o Bray_Curtis_all_no_Chloro/bray_curtis_Skytree_no_low_Chloro_PCoA.txt
-make_emperor.py -i Bray_Curtis_all_no_Chloro/bray_curtis_Skytree_no_low_Chloro_PCoA.txt -m /Volumes/G-tech_RAID/Mi_seq/Skytree170926/map.txt
-upgma_cluster.py -i Bray_Curtis_all_no_Chloro/bray_curtis_Skytree_no_low_Chloro.txt -o Bray_all_no_Chloro.tre
-
-
-#evenをあげる
-biom summarize-table -i Skytree_filtered.biom
-#Min 14W1: 916.0
+#Beta Diversity
 echo "beta_diversity:metrics unweighted_unifrac,weighted_unifrac,bray_curtis" >beta_params.txt
-beta_diversity_through_plots.py -i Skytree_filtered.biom -o bdiv_skytree_e900/ -t /Volumes/G-tech_RAID/Mi_seq/Skytree170926/rep.tre -m /Volumes/G-tech_RAID/Mi_seq/Skytree170926/map.txt -e 900 -p beta_params.txt
-upgma_cluster.py -i bdiv_skytree_e900/weighted_unifrac_dm.txt -o weighted_unifrac_skytree_e900.tre
-upgma_cluster.py -i bdiv_skytree_e900/unweighted_unifrac_dm.txt -o unweighted_unifrac_skytree_e900.tre
-upgma_cluster.py -i bdiv_skytree_e900/bray_curtis_dm.txt -o Bray_skytree_e900.tre
-#けっかとしてUnweightedが最も良いので（relative abundanceが怪しいので）それを選択
-make_2d_plots.py -i bdiv_skytree_e900/unweighted_unifrac_pc.txt -m /Volumes/G-tech_RAID/Mi_seq/Skytree170926/map.txt -o 2D_plot_unweighted_unifrac_skytree_e900
-
-#ノーマルの処理
-biom summarize-table -i Glacier_all_Silva123_no_nega.biom
-sort_otu_table.py -i Glacier_all_Silva123_no_nega.biom -o no_nega_sorted.biom -m map.txt -s Region
-echo "alpha_diversity:metrics chao1,simpson_reciprocal,shannon" >alfa_params.txt
-alpha_rarefaction.py -i no_nega_sorted.biom -o alfa_rare/ -m map.txt -p alfa_params.txt
-
-#rarefaction curveにあわせてシーケンスの数を調整
-filter_samples_from_otu_table.py -i no_nega_sorted.biom -o no_nega_sorted_no_low.biom -n 2000
-
-
-#Remove Chloroplast
-filter_taxa_from_otu_table.py -i no_nega_sorted_no_low.biom -o no_nega_sorted_no_low_only_Chlorophyta.biom -n Chloroplast
-biom summarize-table -i no_nega_sorted_no_low_only_Chlorophyta.biom
-filter_samples_from_otu_table.py -i no_nega_sorted_no_low_only_Chlorophyta.biom -o no_nega_sorted_no_low_only_Chlorophyta_high.biom -m map.txt -n 1000
-alpha_rarefaction.py -i no_nega_sorted_no_low_only_Chlorophyta_high.biom -o alfa_rare_only_Chlorophyta/ -m map.txt -p alfa_params.txt
-summarize_taxa_through_plots.py -o taxa_summary_all/ -i no_nega_sorted_no_low_only_Chlorophyta_high.biom -m map.txt
-
-
-#Glacier sample only
-filter_samples_from_otu_table.py -i no_nega_sorted_no_low_only_Chlorophyta_high.biom -o GLACIER_0.biom -m map.txt -s 'Type:Glacier'
-alpha_rarefaction.py -i GLACIER.biom -o alfa_rare_GLACIER/ -m map.txt -p alfa_params.txt
-summarize_taxa_through_plots.py -o taxa_summary_glacier/ -i GLACIER.biom -m map.txt
-beta_diversity_through_plots.py -i GLACIER.biom -o bdiv_glacier/ -t rep.tre -m map.txt -e 100
-make_emperor.py -i bdiv_glacier/weighted_unifrac_pc.txt -m map.txt -o emperor_output -t taxa_summary_glacier/GLACIER_L6.txt -o biplot -n 10 # -n number of taxa
-upgma_cluster.py -i bdiv_glacier/weighted_unifrac_dm.txt -o weighted_unifrac.tre
-
-#Greenland sample only
-filter_samples_from_otu_table.py -i /Volumes/G-tech_RAID/Mi_seq/GlobalGlacier170629/GLACIER.biom -o Greenland_0.biom -m map.txt -s 'Region:Greenland'
-sort_otu_table.py -i Greenland_0.biom -o Greenland.biom -m map.txt -s Latitude
-echo "alpha_diversity:metrics chao1,simpson_reciprocal,shannon" >alfa_params.txt
-alpha_rarefaction.py -i Greenland.biom -o alfa_rare_Greenland/ -m map.txt -p alfa_params.txt
-summarize_taxa_through_plots.py -o taxa_summary_Greenland/ -i Greenland.biom -m map.txt
-summarize_taxa_through_plots.py -o taxa_summary_Greenland_site/ -i Greenland.biom -m map.txt -c Site
-beta_diversity_through_plots.py -i Greenland.biom -o bdiv_Greenland/ -t rep.tre -m map.txt -e 100
-make_emperor.py -i bdiv_Greenland/weighted_unifrac_pc.txt -m map.txt -o emperor_output -t taxa_summary_Greenland/Greenland_L6.txt -o biplot -n 10 # -n number of taxa
-upgma_cluster.py -i bdiv_Greenland/weighted_unifrac_dm.txt -o weighted_unifrac.tre
-
-#size 30
-
-filter_samples_from_otu_table.py -i Greenland.biom -o Greenland_no_QA1.biom -m map.txt -s 'Site:QA1,QA2,QM'
-filter_samples_from_otu_table.py -i Greenland_no_QA1.biom -o Greenland30.biom -m map.txt -s 'Size:30'
-echo "alpha_diversity:metrics chao1,simpson_reciprocal,shannon" >alfa_params.txt
-alpha_rarefaction.py -i Greenland30.biom -o alfa_rare_Greenland30/ -m map.txt -p alfa_params.txt
-summarize_taxa_through_plots.py -o taxa_summary_Greenland30/ -i Greenland30.biom -m map.txt
-summarize_taxa_through_plots.py -o taxa_summary_Greenland30_Site/ -i Greenland30.biom -m map.txt -c Site
-beta_diversity_through_plots.py -i Greenland30.biom -o bdiv_Greenland30/ -t rep.tre -m map.txt -e 100
-make_emperor.py -i bdiv_Greenland30/weighted_unifrac_pc.txt -m map.txt -o emperor_output -t taxa_summary_Greenland30/Greenland30_L6.txt -o biplot30 -n 10 # -n number of taxa
-upgma_cluster.py -i bdiv_Greenland30/weighted_unifrac_dm.txt -o weighted_unifrac30.tre
-
-#size 1600
-filter_samples_from_otu_table.py -i Greenland.biom -o Greenland1600.biom -m map.txt -s 'Size:1000,1600'
-echo "alpha_diversity:metrics chao1,simpson_reciprocal,shannon" >alfa_params.txt
-alpha_rarefaction.py -i Greenland1600.biom -o alfa_rare_Greenland1600/ -m map.txt -p alfa_params.txt
-summarize_taxa_through_plots.py -o taxa_summary_Greenland1600/ -i Greenland1600.biom -m map.txt
-summarize_taxa_through_plots.py -o taxa_summary_Greenland1600_site/ -i Greenland1600.biom -m map.txt -c Site
-beta_diversity_through_plots.py -i Greenland1600.biom -o bdiv_Greenland1600/ -t rep.tre -m map.txt -e 100
-make_emperor.py -i bdiv_Greenland1600/weighted_unifrac_pc.txt -m map.txt -o emperor_output -t taxa_summary_Greenland1600/Greenland1600_L6.txt -o biplot1600 -n 10 # -n number of taxa
-upgma_cluster.py -i bdiv_Greenland1600/weighted_unifrac_dm.txt -o weighted_unifrac1600.tre
-
-#bioaerosol in case use
-http://qiime.org/tutorials/filtering_contamination_otus.html
-
-#Source tracking
-R --slave --vanilla --args -h < $SOURCETRACKER_PATH/sourcetracker_for_qiime.r
-で動いたので、その後のオプションを入れて今後動かすことを検討する
-
-
-#bray_curtis plot
-beta_diversity.py -i no_nega_sorted_no_low_only_Chlorophyta_high.biom -m bray_curtis -o beta_div/
-
-#UniFrac
-##IMPORTANT create phylogenetic tree of representative sequences
-beta_diversity.py -i no_nega_sorted_no_low_only_Chlorophyta_high.biom -m weighted_unifrac -o beta_div_wUF/ -t beta_div/beta_div_cluster.tre
-beta_diversity_through_plots.py -i no_nega_sorted_no_low_only_Chlorophyta_high.biom -o bdiv_even100/ -t rep.tre -m map_filtered.txt -e 100
-make_emperor.py -i bdiv_even100/weighted_unifrac_pc.txt -m map.txt -o emperor_output -t taxa_summary_only_Chlorophyta/no_nega_sorted_no_low_only_Chlorophyta_high_L6.txt -o biplot -n 5 # -n number of taxa
-
-#phylotoast
-LDA.py -i no_nega_sorted_no_low_only_Chlorophyta_high.biom -m map.txt -g Region
+#"rep.tre" was made using Geneious 10.0.9 (FastTree) from fasta (https://figshare.com/articles/Sequence_of_each_ASV/7772747)
+beta_diversity_through_plots.py -i Skytree_filtered_no_long.biom -o bdiv_skytree/ -t rep.tre -m map.txt -e 870 -p beta_params.txt
+#used output file "unweighted_unifrac_dm.txt" as a input for PRIMER softwear.
