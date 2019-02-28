@@ -1,6 +1,6 @@
 library(dada2)
 
-#Original fastq files are available from https://figshare.com/account/home#/projects/60497
+#Original fastq files are available from https://figshare.com/account/projects/60497/articles/7772831
 path <- "PATH/TO/FOLDER of Air_ref samples"
 fns <- list.files(path)
 fns
@@ -64,7 +64,7 @@ control <- readRDS("Previous_sequences.rds")
 Air_ref <- readRDS("Skytree_air_potential_sources.rds")
 Skytree <- mergeSequenceTables(control, Air_ref)
 
-#Customized silva 128 sequence file is also available from https://figshare.com/account/home#/projects/60497
+#Customized silva 128 sequence file is also available from https://figshare.com/account/projects/60497/articles/7772864
 taxa <- assignTaxonomy(Skytree, "silva_nr_v128_train_set_custom.fa")
 
 Skytree <- t(Skytree)
