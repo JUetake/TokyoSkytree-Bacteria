@@ -23,4 +23,5 @@ biom convert -i Skytree_filtered.txt -o Skytree_filtered_no_long.biom --to-hdf5 
 echo "beta_diversity:metrics unweighted_unifrac,weighted_unifrac,bray_curtis" >beta_params.txt
 #"rep.tre" was made using Geneious 10.0.9 (FastTree) from fasta (https://figshare.com/articles/Sequence_of_each_ASV/7772747)
 beta_diversity_through_plots.py -i Skytree_filtered_no_long.biom -o bdiv_skytree/ -t rep.tre -m map.txt -e 870 -p beta_params.txt
-#used output file "unweighted_unifrac_dm.txt" as a input for PRIMER softwear.
+
+#used output file "unweighted_unifrac_dm.txt" as a input of PRIMER softwear for further analysis.
