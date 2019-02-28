@@ -8,7 +8,8 @@ filter_samples_from_otu_table.py -i Skytree0.biom -o Skytree.biom -m map.txt -s 
 filter_samples_from_otu_table.py -i Skytree.biom -o Skytree_Air.biom -m map.txt -s 'Type:Air'
 filter_samples_from_otu_table.py -i Skytree_Air.biom -o Skytree_Air_no_J.biom -m map.txt -s 'Month:*,!June'
 filter_samples_from_otu_table.py -i Skytree_Air_no_J.biom -o Skytree_Air_no_JJ.biom -m map.txt -s 'Month:*,!July'
-filter_taxa_from_otu_table.py -i Skytree_Air_no_JJ.biom -o Skytree_filtered.biom -n Chloroplast
+filter_taxa_from_otu_table.py -i Skytree_Air_no_JJ.biom -o Skytree_Air_no_JJ_no_Chloro.biom -n Chloroplast
+filter_taxa_from_otu_table.py -i Skytree_Air_no_JJ_no_Chloro.biom -o Skytree_filtered.biom -n Mitochondria
 biom summarize-table -i Skytree_filtered.biom
 
 #Alpha diversity
@@ -21,7 +22,7 @@ biom convert -i Skytree_filtered.txt -o Skytree_filtered_no_long.biom --to-hdf5 
 
 #Beta Diversity
 echo "beta_diversity:metrics unweighted_unifrac,weighted_unifrac,bray_curtis" >beta_params.txt
-#"rep.tre" was made using Geneious 10.0.9 (FastTree) from fasta (https://figshare.com/articles/Sequence_of_each_ASV/7772747)
+#"rep.tre" was created using FastTree implimented in Geneious 10.0.9 from sequences of all ASVs (https://figshare.com/articles/Sequence_of_each_ASV/7772747)
 beta_diversity_through_plots.py -i Skytree_filtered_no_long.biom -o bdiv_skytree/ -t rep.tre -m map.txt -e 870 -p beta_params.txt
 
 #used output file "unweighted_unifrac_dm.txt" as a input of PRIMER softwear for further analysis.
